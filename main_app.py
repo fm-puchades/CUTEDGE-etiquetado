@@ -78,6 +78,9 @@ class CutEdgeLabelApp(tk.Tk):
         self.image_label = ttk.Label(image_frame, text="Sin imagen", anchor="center")
         self.image_label.grid(row=0, column=0, sticky="nsew")
 
+        image_frame.rowconfigure(1, weight=0)
+        self._build_terminal_controls(image_frame)
+
         controls = ttk.Frame(root)
         controls.grid(row=0, column=1, sticky="nsew")
         controls.columnconfigure(0, weight=1)
@@ -90,6 +93,35 @@ class CutEdgeLabelApp(tk.Tk):
 
         status = ttk.Label(root, textvariable=self.status_var, anchor="w")
         status.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+
+    def _build_terminal_controls(self, parent: ttk.Frame) -> None:
+        frame = ttk.LabelFrame(parent, text="Terminal DataMan", padding=4)
+        frame.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        frame.columnconfigure(0, weight=1)
+
+        self.terminal_text = tk.Text(
+            frame,
+            height=5,
+            wrap="word",
+            state="disabled",
+        )
+        self.terminal_text.grid(row=0, column=0, sticky="ew")
+
+        scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=self.terminal_text.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.terminal_text.configure(yscrollcommand=scrollbar.set)
+
+    def _append_terminal(self, message: str) -> None:
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.terminal_text.configure(state="normal")
+        self.terminal_text.insert(tk.END, f"[{timestamp}] {message}\n")
+        self.terminal_text.see(tk.END)
+        self.terminal_text.configure(state="disabled")
+
+    def _clear_terminal(self) -> None:
+        self.terminal_text.configure(state="normal")
+        self.terminal_text.delete("1.0", tk.END)
+        self.terminal_text.configure(state="disabled")
 
     def _build_capture_controls(self, parent: ttk.Frame) -> None:
         frame = ttk.LabelFrame(parent, text="Captura", padding=8)
@@ -155,10 +187,17 @@ class CutEdgeLabelApp(tk.Tk):
         frame.grid(row=2, column=0, sticky="ew", pady=(0, 8))
         frame.columnconfigure(1, weight=1)
 
-        self._add_defect_slider(frame, 0, "rebaba", self.rebaba_presente, self.rebaba_grado)
+        grade_header = ttk.Frame(frame)
+        grade_header.grid(row=0, column=1, sticky="ew", pady=(0, 2))
+        grade_header.columnconfigure(0, weight=1)
+        grade_header.columnconfigure(1, weight=1)
+        ttk.Label(grade_header, text="muy poco").grid(row=0, column=0, sticky="w")
+        ttk.Label(grade_header, text="mucho").grid(row=0, column=1, sticky="e", padx=(0, 42))
 
-        self._add_defect_slider(frame, 1, "estrias", self.estrias_presente, self.estrias_grado)
-        ttk.Label(frame, text="estrias_localizacion").grid(row=2, column=0, sticky="w", padx=(20, 8), pady=2)
+        self._add_defect_slider(frame, 1, "rebaba", self.rebaba_presente, self.rebaba_grado)
+
+        self._add_defect_slider(frame, 2, "estrias", self.estrias_presente, self.estrias_grado)
+        ttk.Label(frame, text="estrias_localizacion").grid(row=3, column=0, sticky="w", padx=(20, 8), pady=2)
         loc = ttk.Combobox(
             frame,
             textvariable=self.estrias_localizacion,
@@ -166,12 +205,12 @@ class CutEdgeLabelApp(tk.Tk):
             state="readonly",
             width=16,
         )
-        loc.grid(row=2, column=1, sticky="w", pady=2)
+        loc.grid(row=3, column=1, sticky="w", pady=2)
 
-        self._add_defect_slider(frame, 3, "oxidacion_coloracion", self.oxidacion_presente, self.oxidacion_grado)
+        self._add_defect_slider(frame, 4, "oxidacion_coloracion", self.oxidacion_presente, self.oxidacion_grado)
 
-        self._add_defect_slider(frame, 4, "falta_corte", self.falta_corte_presente, self.falta_corte_grado)
-        ttk.Label(frame, text="falta_corte_tipo").grid(row=5, column=0, sticky="w", padx=(20, 8), pady=2)
+        self._add_defect_slider(frame, 5, "falta_corte", self.falta_corte_presente, self.falta_corte_grado)
+        ttk.Label(frame, text="falta_corte_tipo").grid(row=6, column=0, sticky="w", padx=(20, 8), pady=2)
         fct = ttk.Combobox(
             frame,
             textvariable=self.falta_corte_tipo,
@@ -179,10 +218,10 @@ class CutEdgeLabelApp(tk.Tk):
             state="readonly",
             width=16,
         )
-        fct.grid(row=5, column=1, sticky="w", pady=2)
+        fct.grid(row=6, column=1, sticky="w", pady=2)
 
-        self._add_defect_slider(frame, 6, "sobrecalentamiento", self.sobrecalentamiento_presente, self.sobrecalentamiento_grado)
-        self._add_defect_slider(frame, 7, "deformacion_pieza", self.deformacion_presente, self.deformacion_grado)
+        self._add_defect_slider(frame, 7, "sobrecalentamiento", self.sobrecalentamiento_presente, self.sobrecalentamiento_grado)
+        self._add_defect_slider(frame, 8, "deformacion_pieza", self.deformacion_presente, self.deformacion_grado)
 
     def _add_defect_slider(
         self,
@@ -247,17 +286,28 @@ class CutEdgeLabelApp(tk.Tk):
     def capture_dataman(self) -> None:
         self.capture_btn.configure(state="disabled")
         self.load_btn.configure(state="disabled")
-        self.status_var.set("Conectando a DataMan. Pulse el gatillo fisico cuando proceda.")
+        self._clear_terminal()
+        self._append_terminal("Modo DataMan iniciado.")
+        self._append_terminal(
+            f"Destino {config.DATAMAN_IP}:{config.DATAMAN_PORT} | "
+            f"connect_timeout={config.DATAMAN_CONNECT_TIMEOUT_S}s | "
+            f"read_timeout={config.DATAMAN_READ_TIMEOUT_S}s | "
+            f"reintentos={config.DATAMAN_CAPTURE_RETRIES}"
+        )
+        self.status_var.set("Conectando a DataMan. Los mensajes aparecen en Terminal DataMan.")
 
         import threading
 
+        def log_to_ui(message: str) -> None:
+            self.after(0, lambda msg=message: self._append_terminal(msg))
+
         def worker() -> None:
             try:
-                image = DataManTCPClient().capture_once()
+                image = DataManTCPClient().capture_once(log_callback=log_to_ui)
             except Exception as exc:  # noqa: BLE001 - show controlled UI error
-                self.after(0, lambda: self._capture_failed(exc))
+                self.after(0, lambda err=exc: self._capture_failed(err))
                 return
-            self.after(0, lambda: self._capture_succeeded(image))
+            self.after(0, lambda img=image: self._capture_succeeded(img))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -277,20 +327,22 @@ class CutEdgeLabelApp(tk.Tk):
 
         self.current_image = pil_image
         self._show_image(pil_image)
-        self.status_var.set(
+        summary = (
             f"Imagen recibida: {image.filename or 'sin_nombre'} | "
             f"{image.image_size} bytes | {image.image_format} | endian={image.endian}"
         )
+        self._append_terminal(summary)
+        self.status_var.set(summary)
 
     def _capture_failed(self, exc: Exception) -> None:
         self.capture_btn.configure(state="normal")
         self.load_btn.configure(state="normal")
-        self.status_var.set("Fallo de captura DataMan.")
         if isinstance(exc, DataManError):
             message = str(exc)
         else:
             message = f"Error inesperado: {exc}"
-        messagebox.showerror("Captura DataMan", message)
+        self._append_terminal(f"Captura fallida: {message}")
+        self.status_var.set("Fallo de captura DataMan. Revise Terminal DataMan.")
 
     def load_local_image(self) -> None:
         path = filedialog.askopenfilename(
@@ -314,10 +366,11 @@ class CutEdgeLabelApp(tk.Tk):
         self.current_dataman_image = None
         self._show_image(image)
         self.status_var.set(f"Imagen local cargada: {Path(path).name}")
+        self._append_terminal(f"Imagen local cargada para prueba: {Path(path).name}")
 
     def _show_image(self, image: Image.Image) -> None:
         preview = image.copy()
-        preview.thumbnail((760, 620))
+        preview.thumbnail((760, 520))
         self.preview_photo = ImageTk.PhotoImage(preview)
         self.image_label.configure(image=self.preview_photo, text="")
 

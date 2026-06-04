@@ -19,6 +19,8 @@ DATAMAN_CONNECTION_MODE = "Local TCP Server"
 DATAMAN_DEVICE = "DataMan 8700LX"
 DATAMAN_READ_TIMEOUT_S = 30.0
 DATAMAN_CONNECT_TIMEOUT_S = 10.0
+DATAMAN_CAPTURE_RETRIES = 3
+DATAMAN_RETRY_DELAY_S = 1.0
 
 # Cabecera validada para imagen TCP DataMan:
 # 4 bytes image_size + 4 bytes image_type + 128 bytes filename
