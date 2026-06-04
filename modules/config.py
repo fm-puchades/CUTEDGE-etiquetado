@@ -21,6 +21,33 @@ DATAMAN_READ_TIMEOUT_S = 30.0
 DATAMAN_CONNECT_TIMEOUT_S = 10.0
 DATAMAN_CAPTURE_RETRIES = 3
 DATAMAN_RETRY_DELAY_S = 1.0
+DATAMAN_RECONNECT_DELAY_AFTER_IMAGE_S = 0.2
+
+# ------------------------------------------------------------
+# Escala visual de referencia en previsualizacion
+# ------------------------------------------------------------
+# La escala es SOLO VISUAL. Se dibuja encima de la previsualizacion,
+# pero NO se guarda sobre el PNG del dataset.
+#
+# Ajustes manuales:
+# - REFERENCE_PX_PER_MM_FULL_RES regula la relacion px/mm.
+#   Si la escala queda corta frente al espesor real, suba este valor.
+#   Si la escala queda larga, bajelo.
+# - REFERENCE_SCALE_X_PREVIEW_PX mueve la escala izquierda/derecha.
+# - REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX mueve la escala arriba/abajo (offset Y).
+#
+# Valor inicial estimado a partir de las imagenes de regla milimetrada
+# cutedge029_1..cutedge033_1, en imagen original DataMan 1440 x 1080.
+REFERENCE_SCALE_ENABLED = True
+REFERENCE_PX_PER_MM_FULL_RES = 18.2
+REFERENCE_SCALE_X_PREVIEW_PX = 22
+REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX = 160 #120 #80 #34
+REFERENCE_SCALE_BOTTOM_MARGIN_PX = 24
+REFERENCE_SCALE_MAX_MM = 25
+REFERENCE_SCALE_MAJOR_TICK_MM = 5
+REFERENCE_SCALE_MINOR_TICK_MM = 1
+REFERENCE_SCALE_LABEL = "mm aprox"
+REFERENCE_SCALE_NOTE = "escala visual aproximada; no sustituye al espesor introducido por el operario"
 
 # Cabecera validada para imagen TCP DataMan:
 # 4 bytes image_size + 4 bytes image_type + 128 bytes filename

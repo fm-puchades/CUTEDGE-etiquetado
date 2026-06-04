@@ -1,0 +1,56 @@
+diff --git a/README.md b/README.md
+index 616e727..5d00255 100644
+--- a/README.md
++++ b/README.md
+@@ -80,7 +80,7 @@ Se ajusta desde `modules/config.py`:
+ ```python
+ REFERENCE_PX_PER_MM_FULL_RES = 19.0
+ REFERENCE_SCALE_X_PREVIEW_PX = 22
+-REFERENCE_SCALE_Y0_PREVIEW_PX = 34
++REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX = 34
+ ```
+ 
+ Uso:
+@@ -88,7 +88,7 @@ Uso:
+ - Si la escala queda corta frente al espesor real, subir `REFERENCE_PX_PER_MM_FULL_RES`.
+ - Si la escala queda larga, bajar `REFERENCE_PX_PER_MM_FULL_RES`.
+ - Para moverla izquierda/derecha, cambiar `REFERENCE_SCALE_X_PREVIEW_PX`.
+-- Para alinear el cero con la cara superior del espesor, cambiar `REFERENCE_SCALE_Y0_PREVIEW_PX`.
++- Para desplazar la escala verticalmente, cambiar `REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX`.
+ 
+ ## Instalacion
+ 
+diff --git a/main_app.py b/main_app.py
+index e52911e..77c35e3 100644
+--- a/main_app.py
++++ b/main_app.py
+@@ -456,7 +456,7 @@ class CutEdgeLabelApp(tk.Tk):
+         scale_height_px = int(round(max_mm * px_per_mm))
+ 
+         x = int(config.REFERENCE_SCALE_X_PREVIEW_PX)
+-        y0 = int(config.REFERENCE_SCALE_Y0_PREVIEW_PX)
++        y0 = int(config.REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX)
+         bottom_margin = int(config.REFERENCE_SCALE_BOTTOM_MARGIN_PX)
+ 
+         # Mantener la escala visible aunque la posicion configurada se salga
+diff --git a/modules/config.py b/modules/config.py
+index 39c134a..91dcb18 100644
+--- a/modules/config.py
++++ b/modules/config.py
+@@ -34,14 +34,14 @@ DATAMAN_RECONNECT_DELAY_AFTER_IMAGE_S = 0.2
+ #   Si la escala queda corta frente al espesor real, suba este valor.
+ #   Si la escala queda larga, bajelo.
+ # - REFERENCE_SCALE_X_PREVIEW_PX mueve la escala izquierda/derecha.
+-# - REFERENCE_SCALE_Y0_PREVIEW_PX mueve el cero de la escala arriba/abajo.
++# - REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX mueve la escala arriba/abajo (offset Y).
+ #
+ # Valor inicial estimado a partir de las imagenes de regla milimetrada
+ # cutedge029_1..cutedge033_1, en imagen original DataMan 1440 x 1080.
+ REFERENCE_SCALE_ENABLED = True
+ REFERENCE_PX_PER_MM_FULL_RES = 19.0
+ REFERENCE_SCALE_X_PREVIEW_PX = 22
+-REFERENCE_SCALE_Y0_PREVIEW_PX = 34
++REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX = 34
+ REFERENCE_SCALE_BOTTOM_MARGIN_PX = 24
+ REFERENCE_SCALE_MAX_MM = 25
+ REFERENCE_SCALE_MAJOR_TICK_MM = 5

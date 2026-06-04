@@ -69,6 +69,27 @@ Excluidas:
 - kerf: porque la imagen sera del canto/espesor, no del ancho de corte.
 - escoria: no se usa en v0.1 para ceñirse al arbol de diagnostico.
 
+
+## Ajuste de escala visual
+
+La escala de la izquierda es solo una referencia visual en la previsualizacion.
+No modifica la imagen guardada en `dataset_cognex/images`.
+
+Se ajusta desde `modules/config.py`:
+
+```python
+REFERENCE_PX_PER_MM_FULL_RES = 19.0
+REFERENCE_SCALE_X_PREVIEW_PX = 22
+REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX = 34
+```
+
+Uso:
+
+- Si la escala queda corta frente al espesor real, subir `REFERENCE_PX_PER_MM_FULL_RES`.
+- Si la escala queda larga, bajar `REFERENCE_PX_PER_MM_FULL_RES`.
+- Para moverla izquierda/derecha, cambiar `REFERENCE_SCALE_X_PREVIEW_PX`.
+- Para desplazar la escala verticalmente, cambiar `REFERENCE_SCALE_OFFSET_Y_PREVIEW_PX`.
+
 ## Instalacion
 
 ```bash
