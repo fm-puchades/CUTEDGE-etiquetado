@@ -1,0 +1,116 @@
+diff --git a/main_app.py b/main_app.py
+index 0170174..3eb8fdd 100644
+--- a/main_app.py
++++ b/main_app.py
+@@ -427,24 +427,41 @@ class CutEdgeLabelApp(tk.Tk):
+         self._append_terminal(f"Imagen local cargada para prueba: {Path(path).name}")
+ 
+     def _show_image(self, image: Image.Image) -> None:
++        original_width, original_height = image.size
+         preview = image.copy()
+         preview.thumbnail((720, 455))
+-        preview = self._draw_reference_scale(preview)
++
++        if config.REFERENCE_SCALE_ENABLED:
++            scale_factor = preview.width / original_width
++            preview_px_per_mm = config.REFERENCE_PX_PER_MM_FULL_RES * scale_factor
++            preview = self._draw_reference_scale_mm(preview, preview_px_per_mm)
++
+         self.preview_photo = ImageTk.PhotoImage(preview)
+         self.image_label.configure(image=self.preview_photo, text="")
+ 
+     @staticmethod
+-    def _draw_reference_scale(image: Image.Image) -> Image.Image:
+-        """Draw a non-calibrated visual reference scale on the preview only."""
++    def _draw_reference_scale_mm(image: Image.Image, px_per_mm: float) -> Image.Image:
++        """Draw an approximate millimetre scale on the preview only.
++
++        Calibration comes from sample ruler images. It is only a visual reference;
++        the saved PNG in dataset_cognex/images is not modified.
++        """
+         preview = image.copy()
+         draw = ImageDraw.Draw(preview)
+         width, height = preview.size
+-        if width < 120 or height < 120:
++        if width < 120 or height < 120 or px_per_mm <= 0:
+             return preview
+ 
++        max_mm = int(config.REFERENCE_SCALE_MAX_MM)
++        scale_height_px = int(round(max_mm * px_per_mm))
++
+         x = 22
+-        y0 = 28
+-        y1 = height - 28
++        y0 = 34
++        bottom_margin = 24
++        if y0 + scale_height_px > height - bottom_margin:
++            y0 = max(20, height - bottom_margin - scale_height_px)
++        y1 = y0 + scale_height_px
++
+         white = (245, 245, 245)
+         black = (0, 0, 0)
+ 
+@@ -452,27 +469,26 @@ class CutEdgeLabelApp(tk.Tk):
+         draw.line((x + 1, y0 + 1, x + 1, y1 + 1), fill=black, width=3)
+         draw.line((x, y0, x, y1), fill=white, width=2)
+ 
+-        for i in range(11):
+-            y = int(y0 + (y1 - y0) * i / 10)
+-            if i in {0, 5, 10}:
+-                tick_len = 22
+-            elif i % 2 == 0:
+-                tick_len = 16
+-            else:
+-                tick_len = 10
++        for mm in range(0, max_mm + 1, int(config.REFERENCE_SCALE_MINOR_TICK_MM)):
++            y = int(round(y0 + mm * px_per_mm))
++            is_major = mm % int(config.REFERENCE_SCALE_MAJOR_TICK_MM) == 0
++            tick_len = 24 if is_major else 10
+ 
+             draw.line((x, y, x + tick_len, y), fill=black, width=4)
+             draw.line((x, y, x + tick_len, y), fill=white, width=2)
+ 
+-            if i in {0, 5, 10}:
+-                label = str(i * 10)
++            if is_major:
++                label = str(mm)
+                 tx = x + tick_len + 5
+                 ty = max(0, min(height - 12, y - 6))
+                 draw.text((tx + 1, ty + 1), label, fill=black)
+                 draw.text((tx, ty), label, fill=white)
+ 
+-        draw.text((x - 4, max(4, y0 - 20)), "ref", fill=black)
+-        draw.text((x - 5, max(3, y0 - 21)), "ref", fill=white)
++        label = config.REFERENCE_SCALE_LABEL
++        label_y = max(3, y0 - 21)
++        draw.text((x - 4, label_y + 1), label, fill=black)
++        draw.text((x - 5, label_y), label, fill=white)
++
+         return preview
+ 
+     # --------------------------------------------------------
+diff --git a/modules/config.py b/modules/config.py
+index 60cad18..4ba2f22 100644
+--- a/modules/config.py
++++ b/modules/config.py
+@@ -23,6 +23,20 @@ DATAMAN_CAPTURE_RETRIES = 3
+ DATAMAN_RETRY_DELAY_S = 1.0
+ DATAMAN_RECONNECT_DELAY_AFTER_IMAGE_S = 0.2
+ 
++# ------------------------------------------------------------
++# Escala visual de referencia en previsualizacion
++# ------------------------------------------------------------
++# Estimada a partir de las imagenes de muestra con regla milimetrada
++# cutedge029_1..cutedge033_1. Valor aproximado en imagen original
++# DataMan 1440 x 1080. No se guarda sobre el PNG del dataset.
++REFERENCE_SCALE_ENABLED = True
++REFERENCE_PX_PER_MM_FULL_RES = 19.0
++REFERENCE_SCALE_MAX_MM = 25
++REFERENCE_SCALE_MAJOR_TICK_MM = 5
++REFERENCE_SCALE_MINOR_TICK_MM = 1
++REFERENCE_SCALE_LABEL = "mm aprox"
++REFERENCE_SCALE_NOTE = "escala visual aproximada; no sustituye al espesor introducido por el operario"
++
+ # Cabecera validada para imagen TCP DataMan:
+ # 4 bytes image_size + 4 bytes image_type + 128 bytes filename
+ DATAMAN_HEADER_SIZE = 136
