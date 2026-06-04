@@ -1,0 +1,13 @@
+   AJUSTES DE LA PISTOLA DATAMAN
+=====================================
+
+# Ajustes de la cámara
+
+Exposición automática: desactivado
+Tiempo de exposición: 300us
+Ganancia: 1.00 (mínimo posible)
+Luz de autofocus: activa
+
+# Ajustes ethernet
+
+IP 169.254.38.45:2121
